@@ -180,6 +180,30 @@ public:
         return BinaryTreeIterator(root, false);
     }
 
+    // Realization: Need to add deliberate disabling of copy and make
+    // the move eliminate the existing pointer (give the BinaryTree move
+    // semantics rather than copy semantics)
+    BinaryTree(BinaryTree &&move) : root(move.root)
+    {
+        move.root = nullptr;
+    }
+
+    // Similarly for the assigment operator
+    BinaryTree &operator=(BinaryTree &&move)
+    {
+        if (&move != this)
+        {
+            if (root)
+            {
+                root->freetree();
+            }
+            root = move.root;
+            move.root = nullptr;
+        }
+        return *this;
+    }
+
+
 protected:
     BinaryTreeNode<K, V> *root;
 };
