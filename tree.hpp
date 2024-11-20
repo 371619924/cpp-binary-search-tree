@@ -95,8 +95,12 @@ public:
 
         if (!working_stack.empty())
         {
-            current = working_stack.top();
+            current = working_stack.top(); // 访问栈顶节点
             working_stack.pop();
+
+            // 移动到当前节点的右子树
+            BinaryTreeNode<K, V> *rightChild = current->right;
+            current = rightChild;
         }
         else
         {
@@ -192,7 +196,7 @@ public:
         return BinaryTreeIterator(root, false);
     }
 
-private:
+protected:
     BinaryTreeNode<K, V> *root;
 
     BinaryTreeNode<K, V> *eraseNode(BinaryTreeNode<K, V> *node, const K &key)
