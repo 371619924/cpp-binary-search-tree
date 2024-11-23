@@ -121,6 +121,13 @@ public:
     // If the key exists in the tree a reference to the
     // associated value is returned.  Otherwise, it will
     // create a new tree node and return that value.
+
+    // What you should do is first check if the root is null
+    // and, if so, just create a new node.
+    // then simply invoke root->find(key) and return
+    // that value as find is already set up to return
+    // a reference.
+
     V &operator[](const K &key)
     {
         if (root == nullptr) // If the tree is empty, create a new node
@@ -223,7 +230,7 @@ public:
         delete this; // Delete the current node
     }
 
-    // Add this function inside BinaryTreeNode
+    
     V &find(const K &key)
     {
         // 基本情况：如果当前节点的键匹配，返回该节点的值
