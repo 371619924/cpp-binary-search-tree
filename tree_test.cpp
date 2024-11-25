@@ -172,7 +172,7 @@ TEST(TreeTest, SortFileTest)
 
     // 调用 sortfile 函数并检查结果
     auto sortedLines = BinaryTree<std::string, int>::sortfile(filename);
-    EXPECT_EQ(sortedLines, (std::vector<std::string>{"123", "345", "567"}));
+    EXPECT_EQ(sortedLines, (std::vector<std::string>{"apple", "banana", "cherry"}));
 
     // 清理文件
     std::remove(filename.c_str());
