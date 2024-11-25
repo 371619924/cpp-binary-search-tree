@@ -17,11 +17,12 @@ class BinaryTreeIterator;
 template <class K, class V>
 class BinaryTreeNode;
 
-static std::vector<std::string> sortfile(const std::string &filename);
+
 
 
 // Tree Iterator Class
 template <class K, class V>
+
 class BinaryTreeIterator : public std::input_iterator_tag
 {
     friend class BinaryTree<K, V>;
@@ -199,6 +200,9 @@ protected:
         return new_node;
     }
 };
+
+
+
 
 // Tree Node Class
 template <class K, class V>

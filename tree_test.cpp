@@ -170,8 +170,19 @@ TEST(TreeTest, SortFileTest)
     outFile << "banana\napple\ncherry\n";
     outFile.close();
 
-    // 调用 sortfile 函数并检查结果
+    // 调试输出：运行sortfile测试
+    std::cout << "Running sortfile test..." << std::endl;
+
+    // 调用sortfile函数并检查结果
     auto sortedLines = BinaryTree<std::string, int>::sortfile(filename);
+
+    // 调试输出：显示排序结果
+    std::cout << "Sorted lines: " << std::endl;
+    for (const auto &line : sortedLines) {
+        std::cout << line << std::endl;
+    }
+
+    // 检查排序是否正确
     EXPECT_EQ(sortedLines, (std::vector<std::string>{"apple", "banana", "cherry"}));
 
     // 清理文件
