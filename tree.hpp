@@ -61,6 +61,11 @@ public:
         {
             current = working_stack.top();
             working_stack.pop();
+            // After visiting the current node, move to its right child
+            if (current != nullptr)
+            {
+                working_stack.push(current->right);
+            }
         }
         else
         {
@@ -298,7 +303,14 @@ protected:
             }
         }
         update_height();
-        return balance();
+        // 延迟平衡和旋转操作，只有在需要时才进行
+        int balance_factor = get_balance();
+        if (balance_factor > 1 || balance_factor < -1)
+        {
+            return balance(); // 重新平衡树
+        }
+
+        return this; // 返回当前节点，避免不必要的递归
     }
 
     bool contains(const K &k)
