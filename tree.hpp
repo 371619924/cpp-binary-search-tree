@@ -142,6 +142,8 @@ public:
     {
         if (root)
             root->freetree();
+            delete root;
+            root = nullptr;
     }
 
     BinaryTreeIterator<K, V> begin()
@@ -180,15 +182,19 @@ class BinaryTreeNode
     friend class BinaryTreeIterator<K, V>;
 
 public:
-    BinaryTreeNode(const K &keyin) : key(keyin), left(nullptr), right(nullptr) {}
+    BinaryTreeNode(const K &keyin) : key(keyin), left(nullptr), right(nullptr){}
 
     void freetree()
     {
-        if (left)
+        if (left){
             left->freetree();
-        if (right)
+            delete left;
+            left = nullptr;}
+        if (right){
             right->freetree();
-        delete this;
+            delete right;
+            right = nullptr;}
+        
     }
 
     V &find(const K &key)
