@@ -107,25 +107,19 @@ public:
         return *this;
     }
 
-    BinaryTree(BinaryTree &&move) : root(move.root)
-    {
+    BinaryTree(BinaryTree &&move) noexcept : root(std::move(move.root)) {
+    move.root = nullptr;
+}
+
+BinaryTree& operator=(BinaryTree &&move) noexcept {
+    if (this != &move) {
+        // No need to free the current root; the move will do that
+        root = std::move(move.root);
         move.root = nullptr;
     }
+    return *this;
+}
 
-    BinaryTree &operator=(BinaryTree &&move)
-    {
-        if (this != &move)
-        {
-            if (root)
-            {
-                root->freetree();
-                delete root;
-            }
-            root = move.root;
-            move.root = nullptr;
-        }
-        return *this;
-    }
 
     V &operator[](const K &key)
     {
