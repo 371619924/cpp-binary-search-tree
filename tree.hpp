@@ -44,6 +44,10 @@ public:
     {
         return current != other.current || !working_stack.empty();
     }
+    bool operator==(const BinaryTreeIterator<K, V> &other) const
+    {
+        return current == other.current && working_stack.empty() == other.working_stack.empty();
+    }
 
     void incr()
     {
@@ -161,12 +165,9 @@ protected:
     BinaryTreeNode<K, V> *copy_tree(BinaryTreeNode<K, V> *node)
     {
         if (!node)
-        {
             return nullptr;
-        }
         auto new_node = new BinaryTreeNode<K, V>(node->key);
         new_node->value = node->value;
-        new_node->height = node->height;
         new_node->left = copy_tree(node->left);
         new_node->right = copy_tree(node->right);
         return new_node;
@@ -195,84 +196,109 @@ public:
     V &find(const K &key)
     {
         if (key == this->key)
-        {
-            return this->value;
-        }
+            return this->value; // 返回节点值的引用
 
         if (key < this->key)
         {
             if (!left)
-            {
-                left = new BinaryTreeNode<K, V>(key); // 确保这里正确
-            }
-            return left->find(key);
+                left = new BinaryTreeNode<K, V>(key);
+            return left->find(key); // 递归调用返回引用
         }
-
-        if (!right)
+        else
         {
-            right = new BinaryTreeNode<K, V>(key); // 确保这里正确
+            if (!right)
+                right = new BinaryTreeNode<K, V>(key);
+            return right->find(key); // 递归调用返回引用
         }
-        return right->find(key);
+    }
+
+    BinaryTreeNode<K, V> *balance()
+    {
+        int balance_factor = get_balance();
+        if (balance_factor > 1) // 左子树更重
+        {
+            if (left && left->get_balance() < 0) // LR
+                left = left->rotate_left();
+            return rotate_right();
+        }
+        if (balance_factor < -1) // 右子树更重
+        {
+            if (right && right->get_balance() > 0) // RL
+                right = right->rotate_right();
+            return rotate_left();
+        }
+        return this;
     }
 
 protected:
-    int height; // 节点高度
-    int getHeight(BinaryTreeNode<K, V> *node)
+    int height; // 用于存储节点的高度
+
+    int get_height(BinaryTreeNode<K, V> *node) const
     {
         return node ? node->height : 0;
     }
 
-    void updateHeight()
+    int get_balance() const
     {
-        height = 1 + std::max(getHeight(left), getHeight(right));
+        return get_height(left) - get_height(right);
     }
 
-    int getBalanceFactor()
+    BinaryTreeNode<K, V> *rotate_right()
     {
-        return getHeight(left) - getHeight(right);
+        BinaryTreeNode<K, V> *new_root = left;
+        left = new_root->right;
+        new_root->right = this;
+        update_height();
+        new_root->update_height();
+        return new_root;
+    }
+
+    BinaryTreeNode<K, V> *rotate_left()
+    {
+        BinaryTreeNode<K, V> *new_root = right;
+        right = new_root->left;
+        new_root->left = this;
+        update_height();
+        new_root->update_height();
+        return new_root;
+    }
+
+    void update_height()
+    {
+        height = 1 + std::max(get_height(left), get_height(right));
     }
     BinaryTreeNode<K, V> *erase(const K &k)
     {
-
         if (k < key)
         {
             if (left)
-            {
                 left = left->erase(k);
-            }
         }
         else if (k > key)
         {
             if (right)
-            {
                 right = right->erase(k);
-            }
         }
         else
         {
-            if (!left)
+            if (!left || !right)
             {
-                auto tmp = right;
+                BinaryTreeNode<K, V> *tmp = left ? left : right;
                 delete this;
                 return tmp;
             }
-            if (!right)
+            else
             {
-                auto tmp = left;
-                delete this;
-                return tmp;
+                BinaryTreeNode<K, V> *tmp = left;
+                while (tmp->right)
+                    tmp = tmp->right;
+                key = tmp->key;
+                value = tmp->value;
+                left = left->erase(tmp->key);
             }
-
-            auto tmp = left;
-            while (tmp->right)
-            {
-                tmp = tmp->right;
-            }
-            key = tmp->key;
-            value = tmp->value;
-            left = left->erase(tmp->key);
         }
-        return balance(); // 调整平衡后返回
+        update_height();
+        return balance();
     }
 
     bool contains(const K &k)
@@ -282,53 +308,6 @@ protected:
         if (k < key)
             return left && left->contains(k);
         return right && right->contains(k);
-    }
-    BinaryTreeNode<K, V> *rotateRight()
-    {
-        BinaryTreeNode<K, V> *newRoot = left;
-        left = newRoot->right;
-        newRoot->right = this;
-        updateHeight();
-        newRoot->updateHeight();
-        return newRoot;
-    }
-
-    BinaryTreeNode<K, V> *rotateLeft()
-    {
-        BinaryTreeNode<K, V> *newRoot = right;
-        right = newRoot->left;
-        newRoot->left = this;
-        updateHeight();
-        newRoot->updateHeight();
-        return newRoot;
-    }
-
-    BinaryTreeNode<K, V> *balance()
-    {
-        updateHeight();
-        int balanceFactor = getBalanceFactor();
-
-        // 左子树过高
-        if (balanceFactor > 1)
-        {
-            if (left && left->getBalanceFactor() < 0)
-            {
-                left = left->rotateLeft();
-            }
-            return rotateRight();
-        }
-
-        // 右子树过高
-        if (balanceFactor < -1)
-        {
-            if (right && right->getBalanceFactor() > 0)
-            {
-                right = right->rotateRight();
-            }
-            return rotateLeft();
-        }
-
-        return this; // 不需要调整
     }
 
     K key;
