@@ -162,29 +162,16 @@ TEST(TreeTest, MoveAndCopyAssignmentOperators)
     EXPECT_EQ(tree["A"], 0); // 检查源树是否为空
 }
 
-TEST(TreeTest, SortFileTest)
-{
-    // 创建一个临时文件并写入一些字符串
+TEST(TreeTest, SortFileTest) {
     const std::string filename = "test_file.txt";
     std::ofstream outFile(filename);
     outFile << "banana\napple\ncherry\n";
     outFile.close();
 
-    // 调试输出：运行sortfile测试
-    std::cout << "Running sortfile test..." << std::endl;
+    // 调用全局函数 sortfile
+    auto sortedLines = sortfile(filename);
 
-    // 调用sortfile函数并检查结果
-    auto sortedLines = BinaryTree<std::string, int>::sortfile(filename);
-
-    // 调试输出：显示排序结果
-    std::cout << "Sorted lines: " << std::endl;
-    for (const auto &line : sortedLines) {
-        std::cout << line << std::endl;
-    }
-
-    // 检查排序是否正确
     EXPECT_EQ(sortedLines, (std::vector<std::string>{"apple", "banana", "cherry"}));
-
-    // 清理文件
     std::remove(filename.c_str());
 }
+

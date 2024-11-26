@@ -17,12 +17,11 @@ class BinaryTreeIterator;
 template <class K, class V>
 class BinaryTreeNode;
 
-
-
+// 全局函数声明
+std::vector<std::string> sortfile(const std::string &filename);
 
 // Tree Iterator Class
 template <class K, class V>
-
 class BinaryTreeIterator : public std::input_iterator_tag
 {
     friend class BinaryTree<K, V>;
@@ -86,13 +85,11 @@ class BinaryTree
 public:
     BinaryTree() : root(nullptr) {}
 
-    // Deep copy constructor (new:)
     BinaryTree(const BinaryTree &other)
     {
         root = copy_tree(other.root);
     }
 
-    // Deep copy assignment operator (new:)
     BinaryTree &operator=(const BinaryTree &other)
     {
         if (this != &other)
@@ -104,13 +101,11 @@ public:
         return *this;
     }
 
-    // Move constructor
     BinaryTree(BinaryTree &&move) : root(move.root)
     {
         move.root = nullptr;
     }
 
-    // Move assignment operator
     BinaryTree &operator=(BinaryTree &&move)
     {
         if (this != &move)
@@ -160,35 +155,9 @@ public:
         return BinaryTreeIterator(root, false);
     }
 
-    // Sort file function (new:)
-    static std::vector<std::string> sortfile(const std::string &filename)
-    {
-        BinaryTree<std::string, int> tree;
-        std::ifstream file(filename, std::ios::binary);
-        if (!file.is_open())
-        {
-            throw std::runtime_error("Error opening file");
-        }
-
-        std::string line;
-        while (std::getline(file, line))
-        {
-            tree[line] = 0; // Arbitrary value
-        }
-        file.close();
-
-        std::vector<std::string> sorted_lines;
-        for (const auto &[key, value] : tree)
-        {
-            sorted_lines.push_back(key);
-        }
-        return sorted_lines;
-    }
-
 protected:
     BinaryTreeNode<K, V> *root;
 
-    // Helper function for deep copy (new:)
     BinaryTreeNode<K, V> *copy_tree(BinaryTreeNode<K, V> *node)
     {
         if (!node)
@@ -200,9 +169,6 @@ protected:
         return new_node;
     }
 };
-
-
-
 
 // Tree Node Class
 template <class K, class V>
@@ -308,5 +274,30 @@ protected:
     BinaryTreeNode<K, V> *left;
     BinaryTreeNode<K, V> *right;
 };
+
+// 全局函数定义
+std::vector<std::string> sortfile(const std::string &filename)
+{
+    BinaryTree<std::string, int> tree;
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open())
+    {
+        throw std::runtime_error("Error opening file");
+    }
+
+    std::string line;
+    while (std::getline(file, line))
+    {
+        tree[line] = 0; // Arbitrary value
+    }
+    file.close();
+
+    std::vector<std::string> sorted_lines;
+    for (const auto &[key, value] : tree)
+    {
+        sorted_lines.push_back(key);
+    }
+    return sorted_lines;
+}
 
 #endif // TREE_HPP
