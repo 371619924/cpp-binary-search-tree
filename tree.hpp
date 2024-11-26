@@ -85,9 +85,12 @@ class BinaryTree
 public:
     BinaryTree() : root(nullptr) {}
 
-    BinaryTree(const BinaryTree &other)
+    BinaryTree(const BinaryTree &other) : root(nullptr)
     {
-        root = copy_tree(other.root);
+        if (other.root)
+        {
+            root = other.root->deepCopy();
+        }
     }
 
     BinaryTree &operator=(const BinaryTree &other)
@@ -95,8 +98,11 @@ public:
         if (this != &other)
         {
             if (root)
+            {
                 root->freetree();
-            root = copy_tree(other.root);
+                delete root;
+            }
+            root = other.root ? other.root->deepCopy() : nullptr;
         }
         return *this;
     }
@@ -111,7 +117,10 @@ public:
         if (this != &move)
         {
             if (root)
+            {
                 root->freetree();
+                delete root;
+            }
             root = move.root;
             move.root = nullptr;
         }
@@ -147,30 +156,16 @@ public:
 
     BinaryTreeIterator<K, V> begin()
     {
-        return BinaryTreeIterator(root, true);
+        return BinaryTreeIterator<K, V>(root, true);
     }
 
     BinaryTreeIterator<K, V> end()
     {
-        return BinaryTreeIterator(root, false);
+        return BinaryTreeIterator<K, V>(nullptr, false);
     }
 
 protected:
     BinaryTreeNode<K, V> *root;
-
-    BinaryTreeNode<K, V> *copy_tree(BinaryTreeNode<K, V> *node)
-    {
-        if (!node)
-        {
-            return nullptr;
-        }
-        auto new_node = new BinaryTreeNode<K, V>(node->key);
-        new_node->value = node->value;
-        new_node->height = node->height;
-        new_node->left = copy_tree(node->left);
-        new_node->right = copy_tree(node->right);
-        return new_node;
-    }
 };
 
 // Tree Node Class
@@ -215,25 +210,8 @@ public:
         return right->find(key);
     }
 
-protected:
-    int height; // 节点高度
-    int getHeight(BinaryTreeNode<K, V> *node)
-    {
-        return node ? node->height : 0;
-    }
-
-    void updateHeight()
-    {
-        height = 1 + std::max(getHeight(left), getHeight(right));
-    }
-
-    int getBalanceFactor()
-    {
-        return getHeight(left) - getHeight(right);
-    }
     BinaryTreeNode<K, V> *erase(const K &k)
     {
-
         if (k < key)
         {
             if (left)
@@ -283,6 +261,7 @@ protected:
             return left && left->contains(k);
         return right && right->contains(k);
     }
+
     BinaryTreeNode<K, V> *rotateRight()
     {
         BinaryTreeNode<K, V> *newRoot = left;
@@ -331,6 +310,39 @@ protected:
         return this; // 不需要调整
     }
 
+    int getHeight(BinaryTreeNode<K, V> *node)
+    {
+        return node ? node->height : 0;
+    }
+
+    void updateHeight()
+    {
+        height = 1 + std::max(getHeight(left), getHeight(right));
+    }
+
+    int getBalanceFactor()
+    {
+        return getHeight(left) - getHeight(right);
+    }
+
+    BinaryTreeNode<K, V> *deepCopy() const
+    {
+        auto new_node = new BinaryTreeNode<K, V>(key);
+        new_node->value = value;
+        new_node->height = height;
+        if (left)
+        {
+            new_node->left = left->deepCopy();
+        }
+        if (right)
+        {
+            new_node->right = right->deepCopy();
+        }
+        return new_node;
+    }
+
+protected:
+    int height; // 节点高度
     K key;
     V value;
     BinaryTreeNode<K, V> *left;
