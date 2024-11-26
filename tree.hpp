@@ -228,49 +228,56 @@ protected:
     {
         return getHeight(left) - getHeight(right);
     }
-    BinaryTreeNode<K, V> *erase(const K &k)
+BinaryTreeNode<K, V> *erase(const K &k)
+{
+    if (k < key)
     {
-
-        if (k < key)
+        if (left)
         {
-            if (left)
-            {
-                left = left->erase(k);
-            }
+            left = left->erase(k);
         }
-        else if (k > key)
-        {
-            if (right)
-            {
-                right = right->erase(k);
-            }
-        }
-        else
-        {
-            if (!left)
-            {
-                auto tmp = right;
-                delete this;
-                return tmp;
-            }
-            if (!right)
-            {
-                auto tmp = left;
-                delete this;
-                return tmp;
-            }
-
-            auto tmp = left;
-            while (tmp->right)
-            {
-                tmp = tmp->right;
-            }
-            key = tmp->key;
-            value = tmp->value;
-            left = left->erase(tmp->key);
-        }
-        return balance(); // 调整平衡后返回
     }
+    else if (k > key)
+    {
+        if (right)
+        {
+            right = right->erase(k);
+        }
+    }
+    else
+    {
+        // Node to be deleted found
+        if (!left)
+        {
+            auto tmp = right;
+            std::swap(*this, *tmp); // Swap current node with right child
+            delete tmp;
+            return nullptr;
+        }
+        if (!right)
+        {
+            auto tmp = left;
+            std::swap(*this, *tmp); // Swap current node with left child
+            delete tmp;
+            return nullptr;
+        }
+
+        // Both left and right children exist
+        auto tmp = left;
+        while (tmp->right)
+        {
+            tmp = tmp->right;  // Find the maximum node in the left subtree
+        }
+        
+        // Swap values (key, value) with the predecessor node
+        std::swap(key, tmp->key);
+        std::swap(value, tmp->value);
+        
+        left = left->erase(tmp->key);  // Erase the predecessor node
+    }
+
+    return balance(); // Balance the tree after erasing
+}
 
     bool contains(const K &k)
     {
