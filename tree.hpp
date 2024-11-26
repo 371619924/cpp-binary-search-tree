@@ -233,15 +233,14 @@ protected:
     }
     BinaryTreeNode<K, V> *erase(const K &k)
     {
-
-        if (k < key)
+        if (k < this->key)
         {
             if (left)
             {
                 left = left->erase(k);
             }
         }
-        else if (k > key)
+        else if (k > this->key)
         {
             if (right)
             {
@@ -252,27 +251,28 @@ protected:
         {
             if (!left)
             {
-                auto tmp = right;
+                BinaryTreeNode<K, V> *temp = right;
                 delete this;
-                return tmp;
+                return temp;
             }
             if (!right)
             {
-                auto tmp = left;
+                BinaryTreeNode<K, V> *temp = left;
                 delete this;
-                return tmp;
+                return temp;
             }
 
-            auto tmp = left;
-            while (tmp->right)
+            BinaryTreeNode<K, V> *temp = right;
+            while (temp->left)
             {
-                tmp = tmp->right;
+                temp = temp->left;
             }
-            key = tmp->key;
-            value = tmp->value;
-            left = left->erase(tmp->key);
+            std::swap(this->key, temp->key);
+            std::swap(this->value, temp->value);
+            right = right->erase(temp->key);
         }
-        return balance(); // 调整平衡后返回
+
+        return balance();
     }
 
     bool contains(const K &k)
