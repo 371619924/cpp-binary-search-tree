@@ -232,44 +232,54 @@ protected:
     }
     BinaryTreeNode<K, V> *erase(const K &k)
     {
-
-        if (k < key)
+        if (k < this->key)
         {
             if (left)
             {
-                left = left->erase(k);
+                left = left->erase(k); // Recurse into the left subtree
             }
         }
-        else if (k > key)
+        else if (k > this->key)
         {
             if (right)
             {
-                right = right->erase(k);
+                right = right->erase(k); // Recurse into the right subtree
             }
         }
         else
         {
+            // Node to be deleted found
             if (!left)
             {
-                auto tmp = right;
+                // No left child, so just replace this node with the right child
+                BinaryTreeNode<K, V> *temp = right;
                 delete this;
-                return tmp;
+                return temp;
             }
             if (!right)
             {
-                auto tmp = left;
+                // No right child, so just replace this node with the left child
+                BinaryTreeNode<K, V> *temp = left;
                 delete this;
-                return tmp;
+                return temp;
             }
 
+            // Node has two children, find the successor (minimum node in the right subtree)
             BinaryTreeNode<K, V> *temp = right;
-            while (temp->left){
-                temp = temp->left;}
+            while (temp->left)
+            {
+                temp = temp->left; // Find the minimum node in the right subtree
+            }
+
+            // Swap the key and value with the successor
             std::swap(this->key, temp->key);
             std::swap(this->value, temp->value);
+
+            // Erase the successor node now that it has been swapped
             right = right->erase(temp->key);
         }
-        return balance(); // 调整平衡后返回
+
+        return balance(); // Adjust balance after erasing the node
     }
 
     bool contains(const K &k)
