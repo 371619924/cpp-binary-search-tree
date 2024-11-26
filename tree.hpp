@@ -17,6 +17,8 @@ class BinaryTreeIterator;
 template <class K, class V>
 class BinaryTreeNode;
 
+std::vector<std::string> sortfile(const std::string &filename);
+
 // Tree Iterator Class
 template <class K, class V>
 class BinaryTreeIterator : public std::input_iterator_tag
@@ -180,7 +182,8 @@ class BinaryTreeNode
     friend class BinaryTreeIterator<K, V>;
 
 public:
-    BinaryTreeNode(const K &keyin) : key(keyin), left(nullptr), right(nullptr), height(1) {}
+    
+    BinaryTreeNode(const K &keyin) : key(keyin), left(nullptr), right(nullptr) {}
 
     void freetree()
     {
