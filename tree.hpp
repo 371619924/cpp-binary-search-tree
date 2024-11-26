@@ -233,6 +233,7 @@ protected:
     }
     BinaryTreeNode<K, V> *erase(const K &k)
     {
+
         if (k < key)
         {
             if (left)
@@ -262,22 +263,16 @@ protected:
                 return tmp;
             }
 
-            // Find the in-order successor (the smallest node in the right subtree)
             auto tmp = left;
             while (tmp->right)
             {
                 tmp = tmp->right;
             }
-
-            // Swap key and value with the in-order successor
-            std::swap(key, tmp->key);
-            std::swap(value, tmp->value);
-
-            // Now erase the in-order successor node from the left subtree
+            key = tmp->key;
+            value = tmp->value;
             left = left->erase(tmp->key);
         }
-
-        return balance(); // Rebalance the tree after deletion
+        return balance(); // 调整平衡后返回
     }
 
     bool contains(const K &k)
