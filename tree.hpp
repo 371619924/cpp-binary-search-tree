@@ -101,19 +101,21 @@ public:
         return *this;
     }
 
-    BinaryTree(BinaryTree &&move) noexcept : root(std::move(move.root)) {
-    move.root = nullptr;
-}
-
-BinaryTree& operator=(BinaryTree &&move) noexcept {
-    if (this != &move) {
-        // No need to free the current root; the move will do that
-        root = std::move(move.root);
+    BinaryTree(BinaryTree &&move) noexcept : root(std::move(move.root))
+    {
         move.root = nullptr;
     }
-    return *this;
-}
 
+    BinaryTree &operator=(BinaryTree &&move) noexcept
+    {
+        if (this != &move)
+        {
+            // No need to free the current root; the move will do that
+            root = std::move(move.root);
+            move.root = nullptr;
+        }
+        return *this;
+    }
 
     V &operator[](const K &key)
     {
@@ -228,56 +230,47 @@ protected:
     {
         return getHeight(left) - getHeight(right);
     }
-BinaryTreeNode<K, V> *erase(const K &k)
-{
-    if (k < key)
+    BinaryTreeNode<K, V> *erase(const K &k)
     {
-        if (left)
-        {
-            left = left->erase(k);
-        }
-    }
-    else if (k > key)
-    {
-        if (right)
-        {
-            right = right->erase(k);
-        }
-    }
-    else
-    {
-        // Node to be deleted found
-        if (!left)
-        {
-            auto tmp = right;
-            std::swap(*this, *tmp); // Swap current node with right child
-            delete tmp;
-            return nullptr;
-        }
-        if (!right)
-        {
-            auto tmp = left;
-            std::swap(*this, *tmp); // Swap current node with left child
-            delete tmp;
-            return nullptr;
-        }
 
-        // Both left and right children exist
-        auto tmp = left;
-        while (tmp->right)
+        if (k < key)
         {
-            tmp = tmp->right;  // Find the maximum node in the left subtree
+            if (left)
+            {
+                left = left->erase(k);
+            }
         }
-        
-        // Swap values (key, value) with the predecessor node
-        std::swap(key, tmp->key);
-        std::swap(value, tmp->value);
-        
-        left = left->erase(tmp->key);  // Erase the predecessor node
-    }
+        else if (k > key)
+        {
+            if (right)
+            {
+                right = right->erase(k);
+            }
+        }
+        else
+        {
+            if (!left)
+            {
+                auto tmp = right;
+                delete this;
+                return tmp;
+            }
+            if (!right)
+            {
+                auto tmp = left;
+                delete this;
+                return tmp;
+            }
 
-    return balance(); // Balance the tree after erasing
-}
+            BinaryTreeNode<K, V> *temp = right;
+            while (temp->left){
+                temp = temp->left;}
+            std::swap(this->key, temp->key);
+            std::swap(this->value, temp->value);
+            right = right->erase(temp->key);
+        }
+        return balance(); // 调整平衡后返回
+    }
 
     bool contains(const K &k)
     {
