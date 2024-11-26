@@ -82,6 +82,28 @@ template <class K, class V>
 class BinaryTree
 {
 public:
+    bool check_avl(BinaryTreeNode<K, V> *node) const
+    {
+        if (!node)
+            return true;
+
+        // 计算左右子树的高度差（平衡因子）
+        int leftHeight = getHeight(node->left);
+        int rightHeight = getHeight(node->right);
+        int levelDifference = leftHeight - rightHeight; // 这个是平衡因子
+
+        // 如果平衡因子的绝对值大于1，则树不平衡
+        if (std::abs(levelDifference) > 1)
+            return false;
+
+        // 递归检查左右子树
+        return check_avl(node->left) && check_avl(node->right);
+    }
+    bool is_avl() const
+    {
+        return check_avl(root);
+    }
+
     BinaryTree() : root(nullptr) {}
 
     BinaryTree(const BinaryTree &other)
@@ -164,7 +186,7 @@ public:
 protected:
     BinaryTreeNode<K, V> *root;
 
-    BinaryTreeNode<K, V> *copy_tree(BinaryTreeNode<K, V> *node)
+    BinaryTreeNode<K, V> *copy_tree(BinaryTreeNode<K, V> *node) const
     {
         if (!node)
         {
@@ -230,7 +252,7 @@ public:
 
     void updateHeight()
     {
-        height = 1 + std::max(getHeight<K,V>(left), getHeight<K,V>(right));
+        height = 1 + std::max(getHeight<K, V>(left), getHeight<K, V>(right));
     }
 
     int getBalanceFactor()
