@@ -17,9 +17,6 @@ class BinaryTreeIterator;
 template <class K, class V>
 class BinaryTreeNode;
 
-// 全局函数声明
-std::vector<std::string> sortfile(const std::string &filename);
-
 // Tree Iterator Class
 template <class K, class V>
 class BinaryTreeIterator : public std::input_iterator_tag
@@ -110,7 +107,6 @@ public:
     {
         if (this != &move)
         {
-            // No need to free the current root; the move will do that
             root = std::move(move.root);
             move.root = nullptr;
         }
@@ -140,10 +136,12 @@ public:
 
     ~BinaryTree()
     {
-        if (root){
+        if (root)
+        {
             root->freetree();
             delete root;
-            root = nullptr;}
+            root = nullptr;
+        }
     }
 
     BinaryTreeIterator<K, V> begin()
@@ -182,19 +180,22 @@ class BinaryTreeNode
     friend class BinaryTreeIterator<K, V>;
 
 public:
-    BinaryTreeNode(const K &keyin) : key(keyin), left(nullptr), right(nullptr){}
+    BinaryTreeNode(const K &keyin) : key(keyin), left(nullptr), right(nullptr), height(1) {}
 
     void freetree()
     {
-        if (left){
+        if (left)
+        {
             left->freetree();
             delete left;
-            left = nullptr;}
-        if (right){
+            left = nullptr;
+        }
+        if (right)
+        {
             right->freetree();
             delete right;
-            right = nullptr;}
-        
+            right = nullptr;
+        }
     }
 
     V &find(const K &key)
@@ -208,20 +209,20 @@ public:
         {
             if (!left)
             {
-                left = new BinaryTreeNode<K, V>(key); // 确保这里正确
+                left = new BinaryTreeNode<K, V>(key);
             }
             return left->find(key);
         }
 
         if (!right)
         {
-            right = new BinaryTreeNode<K, V>(key); // 确保这里正确
+            right = new BinaryTreeNode<K, V>(key);
         }
         return right->find(key);
     }
 
 protected:
-    int height; // 节点高度
+    int height;
     int getHeight(BinaryTreeNode<K, V> *node)
     {
         return node ? node->height : 0;
@@ -236,56 +237,51 @@ protected:
     {
         return getHeight(left) - getHeight(right);
     }
+
     BinaryTreeNode<K, V> *erase(const K &k)
     {
         if (k < this->key)
         {
             if (left)
             {
-                left = left->erase(k); // Recurse into the left subtree
+                left = left->erase(k);
             }
         }
         else if (k > this->key)
         {
             if (right)
             {
-                right = right->erase(k); // Recurse into the right subtree
+                right = right->erase(k);
             }
         }
         else
         {
-            // Node to be deleted found
             if (!left)
             {
-                // No left child, so just replace this node with the right child
                 BinaryTreeNode<K, V> *temp = right;
                 delete this;
                 return temp;
             }
             if (!right)
             {
-                // No right child, so just replace this node with the left child
                 BinaryTreeNode<K, V> *temp = left;
                 delete this;
                 return temp;
             }
 
-            // Node has two children, find the successor (minimum node in the right subtree)
             BinaryTreeNode<K, V> *temp = right;
             while (temp->left)
             {
-                temp = temp->left; // Find the minimum node in the right subtree
+                temp = temp->left;
             }
 
-            // Swap the key and value with the successor
             std::swap(this->key, temp->key);
             std::swap(this->value, temp->value);
 
-            // Erase the successor node now that it has been swapped
             right = right->erase(temp->key);
         }
 
-        return balance(); // Adjust balance after erasing the node
+        return balance();
     }
 
     bool contains(const K &k)
@@ -296,6 +292,7 @@ protected:
             return left && left->contains(k);
         return right && right->contains(k);
     }
+
     BinaryTreeNode<K, V> *rotateRight()
     {
         BinaryTreeNode<K, V> *newRoot = left;
@@ -321,7 +318,6 @@ protected:
         updateHeight();
         int balanceFactor = getBalanceFactor();
 
-        // 左子树过高
         if (balanceFactor > 1)
         {
             if (left && left->getBalanceFactor() < 0)
@@ -331,7 +327,6 @@ protected:
             return rotateRight();
         }
 
-        // 右子树过高
         if (balanceFactor < -1)
         {
             if (right && right->getBalanceFactor() > 0)
@@ -341,7 +336,7 @@ protected:
             return rotateLeft();
         }
 
-        return this; // 不需要调整
+        return this;
     }
 
     K key;
@@ -349,30 +344,29 @@ protected:
     BinaryTreeNode<K, V> *left;
     BinaryTreeNode<K, V> *right;
 };
-
-// 全局函数定义
 std::vector<std::string> sortfile(const std::string &filename)
 {
-    BinaryTree<std::string, int> tree;
     std::ifstream file(filename, std::ios::binary);
-    if (!file.is_open())
+    if (!file)
     {
-        throw std::runtime_error("Error opening file");
+        throw std::runtime_error("Can't Open...");
     }
 
+    BinaryTree<std::string, int> tree;
     std::string line;
     while (std::getline(file, line))
     {
-        tree[line] = 0; // Arbitrary value
+        tree[line] = 0;
     }
-    file.close();
 
-    std::vector<std::string> sorted_lines;
+    std::vector<std::string> sortedLines;
     for (const auto &[key, value] : tree)
     {
-        sorted_lines.push_back(key);
+        sortedLines.push_back(key);
     }
-    return sorted_lines;
+
+    return sortedLines;
 }
+
 
 #endif // TREE_HPP
