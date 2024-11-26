@@ -233,14 +233,14 @@ protected:
     }
     BinaryTreeNode<K, V> *erase(const K &k)
     {
-        if (k < this->key)
+        if (k < key)
         {
             if (left)
             {
                 left = left->erase(k);
             }
         }
-        else if (k > this->key)
+        else if (k > key)
         {
             if (right)
             {
@@ -251,28 +251,33 @@ protected:
         {
             if (!left)
             {
-                BinaryTreeNode<K, V> *temp = right;
+                auto tmp = right;
                 delete this;
-                return temp;
+                return tmp;
             }
             if (!right)
             {
-                BinaryTreeNode<K, V> *temp = left;
+                auto tmp = left;
                 delete this;
-                return temp;
+                return tmp;
             }
 
-            BinaryTreeNode<K, V> *temp = right;
-            while (temp->left)
+            // Find the in-order successor (the smallest node in the right subtree)
+            auto tmp = left;
+            while (tmp->right)
             {
-                temp = temp->left;
+                tmp = tmp->right;
             }
-            std::swap(this->key, temp->key);
-            std::swap(this->value, temp->value);
-            right = right->erase(temp->key);
+
+            // Swap key and value with the in-order successor
+            std::swap(key, tmp->key);
+            std::swap(value, tmp->value);
+
+            // Now erase the in-order successor node from the left subtree
+            left = left->erase(tmp->key);
         }
 
-        return balance();
+        return balance(); // Rebalance the tree after deletion
     }
 
     bool contains(const K &k)
