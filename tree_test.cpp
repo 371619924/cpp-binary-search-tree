@@ -175,3 +175,44 @@ TEST(TreeTest, SortFileTest) {
     std::remove(filename.c_str());
 }
 
+TEST(PerformanceTest, TestPerformance)
+{
+    auto start = std::chrono::system_clock::now();
+    auto range = 50000;
+    {
+        BinaryTree<int, int> c;
+        for (auto x : std::views::iota(0, range))
+        {
+            c[x] = x;
+            EXPECT_TRUE(c.contains(x));
+        }
+        for (auto x : std::views::iota(0, range))
+        {
+            EXPECT_TRUE(c.contains(x));
+            c.erase(x);
+            EXPECT_FALSE(c.contains(x));
+        }
+    }
+    auto second = std::chrono::system_clock::now();
+    {
+        BinaryTree<int, int> c;
+        for (auto x : std::views::iota(0, range * 10))
+        {
+            c[x] = x;
+            EXPECT_TRUE(c.contains(x));
+        }
+        for (auto x : std::views::iota(0, range * 10))
+        {
+            EXPECT_TRUE(c.contains(x));
+            c.erase(x);
+            EXPECT_FALSE(c.contains(x));
+        }
+    }
+    auto done = std::chrono::system_clock::now();
+    auto t1 = std::chrono::duration_cast<std::chrono::microseconds>(second - start).count();
+    auto t2 = std::chrono::duration_cast<std::chrono::microseconds>(done - second).count();
+    std::cout << "Time for " << range << "  insertions:  " << t1 << "us\n";
+    std::cout << "Time for " << (10 * range) << " insertions: " << t2 << "us\n";
+    std::cout << "If AVL is working right, the second should take no more than 10 + lg(10) times more than the first\n";
+    EXPECT_TRUE(t2 < (t1 * 10 * 4));
+}

@@ -161,9 +161,12 @@ protected:
     BinaryTreeNode<K, V> *copy_tree(BinaryTreeNode<K, V> *node)
     {
         if (!node)
+        {
             return nullptr;
+        }
         auto new_node = new BinaryTreeNode<K, V>(node->key);
         new_node->value = node->value;
+        new_node->height = node->height;
         new_node->left = copy_tree(node->left);
         new_node->right = copy_tree(node->right);
         return new_node;
@@ -198,40 +201,52 @@ public:
 
         if (key < this->key)
         {
-            if (left)
+            if (!left)
             {
-                return left->find(key);
+                left = new BinaryTreeNode<K, V>(key); // 确保这里正确
             }
-            else
-            {
-                left = new BinaryTreeNode<K, V>(key);
-                return left->value;
-            }
+            return left->find(key);
         }
 
-        if (right)
+        if (!right)
         {
-            return right->find(key);
+            right = new BinaryTreeNode<K, V>(key); // 确保这里正确
         }
-        else
-        {
-            right = new BinaryTreeNode<K, V>(key);
-            return right->value;
-        }
+        return right->find(key);
     }
 
 protected:
+    int height; // 节点高度
+    int getHeight(BinaryTreeNode<K, V> *node)
+    {
+        return node ? node->height : 0;
+    }
+
+    void updateHeight()
+    {
+        height = 1 + std::max(getHeight(left), getHeight(right));
+    }
+
+    int getBalanceFactor()
+    {
+        return getHeight(left) - getHeight(right);
+    }
     BinaryTreeNode<K, V> *erase(const K &k)
     {
+
         if (k < key)
         {
             if (left)
+            {
                 left = left->erase(k);
+            }
         }
         else if (k > key)
         {
             if (right)
+            {
                 right = right->erase(k);
+            }
         }
         else
         {
@@ -257,7 +272,7 @@ protected:
             value = tmp->value;
             left = left->erase(tmp->key);
         }
-        return this;
+        return balance(); // 调整平衡后返回
     }
 
     bool contains(const K &k)
@@ -267,6 +282,53 @@ protected:
         if (k < key)
             return left && left->contains(k);
         return right && right->contains(k);
+    }
+    BinaryTreeNode<K, V> *rotateRight()
+    {
+        BinaryTreeNode<K, V> *newRoot = left;
+        left = newRoot->right;
+        newRoot->right = this;
+        updateHeight();
+        newRoot->updateHeight();
+        return newRoot;
+    }
+
+    BinaryTreeNode<K, V> *rotateLeft()
+    {
+        BinaryTreeNode<K, V> *newRoot = right;
+        right = newRoot->left;
+        newRoot->left = this;
+        updateHeight();
+        newRoot->updateHeight();
+        return newRoot;
+    }
+
+    BinaryTreeNode<K, V> *balance()
+    {
+        updateHeight();
+        int balanceFactor = getBalanceFactor();
+
+        // 左子树过高
+        if (balanceFactor > 1)
+        {
+            if (left && left->getBalanceFactor() < 0)
+            {
+                left = left->rotateLeft();
+            }
+            return rotateRight();
+        }
+
+        // 右子树过高
+        if (balanceFactor < -1)
+        {
+            if (right && right->getBalanceFactor() > 0)
+            {
+                right = right->rotateRight();
+            }
+            return rotateLeft();
+        }
+
+        return this; // 不需要调整
     }
 
     K key;
