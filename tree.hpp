@@ -140,10 +140,10 @@ public:
 
     ~BinaryTree()
     {
-        if (root)
+        if (root){
             root->freetree();
             delete root;
-            root = nullptr;
+            root = nullptr;}
     }
 
     BinaryTreeIterator<K, V> begin()
