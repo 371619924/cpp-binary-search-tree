@@ -2,412 +2,470 @@
 #define TREE_HPP
 
 
+
 #include <memory>      
-#include <stack>      
+#include <stack>       
 #include <utility>     
 #include <vector>      
 #include <fstream>     
 #include <string>      
 #include <algorithm>   
 #include <stdexcept>   
-//version 27 attmpt
-// Forward declarations of template classes used in the tree
-template <class K, class V> class BinaryTree; 
-template <class K, class V> class BinaryTreeIterator; 
-template <class K, class V> class BinaryTreeNode; 
 
-// Iterator class for the BinaryTree. It will iterate through the tree nodes.
+//version 27 attumpts 3
+
+// Forward declarations of templated classes
+template <class K, class V>
+class BinaryTree; // Represents the binary search tree
+
+template <class K, class V>
+class BinaryTreeIterator; // Iterator for traversing the tree
+
+template <class K, class V>
+class BinaryTreeNode; // Represents a node in the tree
+
+
+
 template <class K, class V>
 class BinaryTreeIterator : public std::input_iterator_tag
 {
-    friend class BinaryTree<K, V>; // BinaryTree can access private members of this iterator
+    friend class BinaryTree<K, V>; // Allows BinaryTree to access private members of the iterator
 
-    // The constructor initializes the iterator to either the root of the tree (start) or nullptr (end)
+    // Constructor: Initializes the iterator with a given tree root and start flag.
+    // If `start` is true, prepares the iterator to start traversing the tree.
     BinaryTreeIterator(BinaryTreeNode<K, V> *root, bool start) : current(root)
     {
         if (start)
         {
-            incr(); // Ensure the iterator is positioned at the first node (in-order traversal start)
+            incr(); // Initialize traversal by finding the first node
         }
     }
 
 public:
-    // Compares iterators to check if they point to different nodes
-    bool operator!=(BinaryTreeIterator<K, V> &other) 
+    // Overloaded inequality operator: Checks if the iterator still has nodes to visit.
+    bool operator!=(BinaryTreeIterator<K, V> &other)
     {
-        // Iterator is not equal if current node or stack state differ
         return current != other.current || !working_stack.empty();
     }
 
-    // The core logic for traversing the tree in-order.
-    // Pushes left children onto the stack until null, then pops from the stack
+    // Advances the iterator to the next node in sorted order.
     void incr()
     {
+        // Traverse to the leftmost node, pushing each visited node onto the stack
         while (current != nullptr)
         {
-            working_stack.push(current); // Push current node to the stack
-            current = current->left;     // Move to left child
+            working_stack.push(current);
+            current = current->left;
         }
 
+        // If the stack is not empty, pop the top node and move to its right child
         if (!working_stack.empty())
         {
-            current = working_stack.top(); // Pop the stack to get the next node
+            current = working_stack.top();
             working_stack.pop();
         }
         else
         {
-            current = nullptr; // No more nodes to visit
+            current = nullptr; // End of traversal
         }
     }
 
-    // Increments the iterator to the next node
+    // Overloaded pre-increment operator: Advances the iterator.
     void operator++() { incr(); }
 
-    // Dereferencing the iterator returns a pair of the current node's key and value
-    std::pair<K, V> operator*() 
+    // Dereference operator: Retrieves the key-value pair of the current node
+    // and moves to the right child for the next traversal step.
+    std::pair<K, V> operator*()
     {
-        auto result = std::make_pair(current->key, current->value); // Get current node's key-value pair
-        current = current->right; // Move to the right child for the next iteration
+        auto result = std::make_pair(current->key, current->value);
+        current = current->right;
         return result;
     }
 
 private:
-    BinaryTreeNode<K, V> *current;  // The current node being pointed to
-    std::stack<BinaryTreeNode<K, V> *> working_stack; // Stack for holding nodes during in-order traversal
+    BinaryTreeNode<K, V> *current; // Pointer to the current node in the tree
+    std::stack<BinaryTreeNode<K, V> *> working_stack; // Stack for maintaining traversal state
 };
 
-// BinaryTree class which is the actual tree structure that holds nodes
 template <class K, class V>
 class BinaryTree
 {
 public:
-    BinaryTree() : root(nullptr) {} // Constructor initializes the root to nullptr
+    // Constructor: Initializes an empty tree with no root.
+    BinaryTree() : root(nullptr) {}
 
-    // Overload the [] operator for accessing and inserting key-value pairs
+    // Overloaded [] operator: 
+    // - If the key exists, returns a reference to the associated value.
+    // - If the key does not exist, creates a new node and returns its value.
     V &operator[](const K &key)
     {
         if (root == nullptr)
         {
-            root = new BinaryTreeNode<K, V>(key); // If the tree is empty, create the root node
+            root = new BinaryTreeNode<K, V>(key); // Create a new root node if tree is empty
         }
         else
         {
-            root = balanceInsert(root, key); // Insert the new key while maintaining tree balance
+            root = balanceInsert(root, key); // Insert the key while maintaining AVL balance
         }
-
-        return root->find(key); // Return the reference to the value associated with the key
+        return root->find(key); // Find and return the value associated with the key
     }
 
-    // Checks if a key exists in the tree
+    // Checks if the tree contains the specified key.
     bool contains(const K &key)
     {
-        return root && root->contains(key); // Return true if key is found, false otherwise
+        return root && root->contains(key); // Delegate to the root node
     }
 
-    // Removes a node with a given key from the tree
+    // Erases a node with the specified key from the tree.
     void erase(const K &key)
     {
         if (root)
         {
-            root = root->erase(key); // Erase node and re-balance the tree
+            root = root->erase(key); // Recursively remove the node
         }
     }
 
+    // Destructor: Frees all nodes in the tree and cleans up resources.
     ~BinaryTree()
     {
         if (root)
         {
-            root->freetree(); // Free the entire tree starting from root
-            delete root;      // Delete the root pointer
+            root->freetree(); // Recursively delete all nodes in the tree
+            delete root;      // Delete the root node
             root = nullptr;
         }
     }
 
-    // Returns an iterator pointing to the first node (start of in-order traversal)
+    // Returns an iterator pointing to the beginning of the tree (smallest key).
     BinaryTreeIterator<K, V> begin()
     {
-        return BinaryTreeIterator<K, V>(root, true); // Start iteration from the root
+        return BinaryTreeIterator<K, V>(root, true);
     }
 
-    // Returns an iterator representing the end of the tree (empty iterator)
+    // Returns an iterator pointing to the end of the tree (dummy node).
     BinaryTreeIterator<K, V> end()
     {
-        return BinaryTreeIterator<K, V>(nullptr, false); // End iterator does not point to any node
+        return BinaryTreeIterator<K, V>(nullptr, false);
     }
 
-    // Copy constructor creates a deep copy of another tree
+    // Copy constructor: Creates a deep copy of the tree.
     BinaryTree(const BinaryTree &other) : root(nullptr)
     {
         if (other.root)
         {
-            root = other.root->copy_tree(); // Copy the tree structure from another tree
+            root = other.root->copy_tree(); // Recursively copy all nodes
         }
     }
 
-    // Copy assignment operator performs deep copy
+    // Copy assignment operator: Deep copies another tree into this tree.
     BinaryTree &operator=(const BinaryTree &other)
     {
-        if (this != &other)
+        if (this != &other) // Avoid self-assignment
         {
             if (root)
             {
-                root->freetree(); // Free current tree before copying
+                root->freetree(); // Free the current tree
                 delete root;
             }
-            root = other.root ? other.root->copy_tree() : nullptr; // Copy the tree from another instance
+            root = other.root ? other.root->copy_tree() : nullptr; // Copy the other tree
         }
         return *this;
     }
 
-    // Move constructor for efficient transferring ownership of resources
+    // Move constructor: Transfers ownership of another tree's resources.
     BinaryTree(BinaryTree &&move) noexcept : root(move.root)
     {
-        move.root = nullptr; // Nullify the original tree's root after moving ownership
+        move.root = nullptr; // Nullify the moved tree's root to avoid double deletion
     }
 
-    // Move assignment operator for efficient transferring ownership
+    // Move assignment operator: Transfers ownership of another tree's resources.
     BinaryTree &operator=(BinaryTree &&move) noexcept
     {
-        if (&move != this)
+        if (&move != this) // Avoid self-move
         {
             if (root)
             {
-                root->freetree(); // Free current tree before moving
+                root->freetree(); // Free the current tree
                 delete root;
             }
-            root = move.root; // Transfer ownership of the tree
+            root = move.root; // Transfer ownership
             move.root = nullptr; // Nullify the moved tree's root
         }
         return *this;
     }
 
-    // Check if the tree is balanced according to AVL rules
+    // Checks if the tree is AVL-balanced.
     bool is_avl() const
     {
-        return check_avl(root); // Recursively check if the tree is AVL
+        return check_avl(root); // Recursively verify AVL properties
     }
 
 protected:
-    BinaryTreeNode<K, V> *root; // Root node of the tree
+    BinaryTreeNode<K, V> *root; // Pointer to the root node of the tree
 
-    // Insert a key while maintaining balance
+    // Balances the tree after inserting a new key.
     BinaryTreeNode<K, V> *balanceInsert(BinaryTreeNode<K, V> *node, const K &key)
     {
         if (!node)
         {
-            return new BinaryTreeNode<K, V>(key); // Create a new node if current is null
+            return new BinaryTreeNode<K, V>(key); // Create a new node if the subtree is empty
         }
         if (key < node->key)
         {
-            node->left = balanceInsert(node->left, key); // Insert in left subtree if key is smaller
+            node->left = balanceInsert(node->left, key); // Insert into the left subtree
         }
         else if (key > node->key)
         {
-            node->right = balanceInsert(node->right, key); // Insert in right subtree if key is larger
+            node->right = balanceInsert(node->right, key); // Insert into the right subtree
         }
-        return node->balance(); // Balance the tree after insertion
+        return node->balance(); // Balance the node after insertion
     }
 
-    // Recursively check if the tree is balanced at all levels
+    // Checks if a subtree is AVL-balanced by verifying balance factors recursively.
     bool check_avl(BinaryTreeNode<K, V> *node) const
     {
         if (!node)
         {
-            return true; // Base case: an empty node is balanced
+            return true; // An empty subtree is balanced
         }
 
-        // Check if the balance factor (height difference) is within AVL limits
-        int leftHeight = getHeight(node->left);
-        int rightHeight = getHeight(node->right);
-        int balanceFactor = leftHeight - rightHeight;
+        int leftHeight = getHeight(node->left);  // Height of the left subtree
+        int rightHeight = getHeight(node->right); // Height of the right subtree
+        int Difference = leftHeight - rightHeight; // Balance factor
 
-        // If the tree is unbalanced, return false
-        if (std::abs(balanceFactor) > 1)
-            return false;
+        if (std::abs(Difference) > 1)
+            return false; // If balance factor exceeds 1, the subtree is unbalanced
 
-        // Recursively check the left and right subtrees
-        return check_avl(node->left) && check_avl(node->right);
+        return check_avl(node->left) && check_avl(node->right); // Check left and right subtrees
     }
 };
 
-// Node class that represents each element in the binary tree
 template <class K, class V>
 class BinaryTreeNode
 {
-    friend class BinaryTree<K, V>; // BinaryTree can access private members of the node
-    friend class BinaryTreeIterator<K, V>; // BinaryTreeIterator can access private members
+    friend class BinaryTree<K, V>;           // Allows BinaryTree to access private members
+    friend class BinaryTreeIterator<K, V>;   // Allows BinaryTreeIterator to access private members
 
 public:
-    BinaryTreeNode(const K &keyin) : key(keyin), left(nullptr), right(nullptr), height(1) {} // Node constructor
+    // Constructor: Initializes the node with a given key, sets height to 1, and child pointers to null.
+    BinaryTreeNode(const K &keyin) : key(keyin), left(nullptr), right(nullptr), height(1) {}
 
-    // Free memory of the left and right subtrees recursively
+    // Recursively deletes all nodes in the subtree rooted at this node.
     void freetree()
     {
         if (left)
         {
-            left->freetree();
-            delete left;
+            left->freetree();  // Delete the left subtree
+            delete left;       // Free memory for the left child
             left = nullptr;
         }
         if (right)
         {
-            right->freetree();
-            delete right;
+            right->freetree(); // Delete the right subtree
+            delete right;      // Free memory for the right child
             right = nullptr;
         }
     }
 
-    // Remove a node with the specified key and return the modified tree
+    // Erases a node with the specified key from the subtree.
     BinaryTreeNode<K, V> *erase(const K &k)
     {
-        if (k < this->key) // If key is smaller, look in the left subtree
+        if (k < this->key)
         {
-            left = left->erase(k);
-        }
-        else if (k > this->key) // If key is larger, look in the right subtree
-        {
-            right = right->erase(k);
-        }
-        else // If key is found, delete this node
-        {
-            if (!left && !right) // No children
+            if (left)
             {
-                delete this;
-                return nullptr;
+                left = left->erase(k); // Recursively erase from the left subtree
             }
-            else if (!left) // Only right child
+        }
+        else if (k > this->key)
+        {
+            if (right)
+            {
+                right = right->erase(k); // Recursively erase from the right subtree
+            }
+        }
+        else // This node matches the key
+        {
+            if (!left) // No left child, replace with right child
             {
                 BinaryTreeNode<K, V> *temp = right;
                 delete this;
                 return temp;
             }
-            else if (!right) // Only left child
+            if (!right) // No right child, replace with left child
             {
                 BinaryTreeNode<K, V> *temp = left;
                 delete this;
                 return temp;
             }
-            else // Both children exist, need to find in-order successor
+
+            // Both children exist; find the in-order successor (smallest node in the right subtree)
+            BinaryTreeNode<K, V> *temp = right;
+            while (temp->left)
             {
-                BinaryTreeNode<K, V> *temp = right;
-                while (temp->left != nullptr)
-                    temp = temp->left; // Find the smallest node in the right subtree
-                key = temp->key;
-                right = right->erase(temp->key); // Remove the in-order successor from the right subtree
+                temp = temp->left;
             }
+
+            // Swap the key and value with the successor
+            std::swap(this->key, temp->key);
+            std::swap(this->value, temp->value);
+
+            // Recursively erase the successor
+            right = right->erase(temp->key);
         }
-        return this->balance(); // Rebalance the tree after erasure
+
+        return balance(); // Balance the subtree after deletion
     }
 
-    // Find a node with the given key and return its associated value
-    V &find(const K &keyin)
+    // Finds the node with the specified key, creating a new node if the key does not exist.
+    V &find(const K &key)
     {
-        if (keyin < key) // If the key is smaller, search the left subtree
+        if (key == this->key)
         {
-            return left->find(keyin);
+            return this->value; // Found the key, return its value
         }
-        else if (keyin > key) // If the key is larger, search the right subtree
+
+        if (key < this->key) // Search in the left subtree
         {
-            return right->find(keyin);
+            if (!left)
+            {
+                left = new BinaryTreeNode<K, V>(key); // Create a new left child if it doesn't exist
+            }
+            return left->find(key);
         }
-        else // Key found, return the value
+
+        if (!right) // Search in the right subtree
         {
-            return value;
+            right = new BinaryTreeNode<K, V>(key); // Create a new right child if it doesn't exist
         }
+        return right->find(key);
     }
 
-    // Check if the current node contains a key
-    bool contains(const K &keyin)
+    // Checks if the subtree contains a specific key.
+    bool contains(const K &k)
     {
-        if (keyin < key) // If key is smaller, look in the left subtree
-        {
-            return left && left->contains(keyin);
-        }
-        else if (keyin > key) // If key is larger, look in the right subtree
-        {
-            return right && right->contains(keyin);
-        }
-        return true; // If key matches, return true
+        if (k == key)
+            return true; // Found the key
+        if (k < key)
+            return left && left->contains(k); // Search in the left subtree
+        return right && right->contains(k);  // Search in the right subtree
     }
 
-    // Return the height of the node in the tree
-    int getHeight()
+    // Creates a deep copy of the subtree rooted at this node.
+    BinaryTreeNode<K, V> *copy_tree() const
     {
-        return height;
+        auto new_node = new BinaryTreeNode<K, V>(this->key); // Create a new node with the same key
+        new_node->value = this->value; // Copy the value
+        if (this->left)
+        {
+            new_node->left = this->left->copy_tree(); // Recursively copy the left subtree
+        }
+        if (this->right)
+        {
+            new_node->right = this->right->copy_tree(); // Recursively copy the right subtree
+        }
+        return new_node;
     }
 
-    // Balance the current node to ensure AVL properties
+    // Balances the subtree rooted at this node using AVL rotations.
     BinaryTreeNode<K, V> *balance()
     {
-        height = std::max(left ? left->height : 0, right ? right->height : 0) + 1; // Update height
-        int balanceFactor = getHeightDifference(); // Calculate balance factor
+        updateHeight(); // Update the height of the current node
+        int balanceFactor = getBalanceFactor(); // Compute the balance factor
 
-        if (balanceFactor > 1) // Left-heavy
+        // Perform rotations based on the balance factor
+        if (balanceFactor > 1)
         {
-            if (left->getHeightDifference() < 0) // Left-right case
+            if (left && left->getBalanceFactor() < 0)
             {
-                left = left->leftRotate(); // Perform left rotation on left child
+                left = left->rotateLeft(); // Perform left rotation on the left child if needed
             }
-            return rightRotate(); // Perform right rotation
+            return rotateRight(); // Perform right rotation on the current node
         }
-        if (balanceFactor < -1) // Right-heavy
+        else if (balanceFactor < -1)
         {
-            if (right->getHeightDifference() > 0) // Right-left case
+            if (right && right->getBalanceFactor() > 0)
             {
-                right = right->rightRotate(); // Perform right rotation on right child
+                right = right->rotateRight(); // Perform right rotation on the right child if needed
             }
-            return leftRotate(); // Perform left rotation
+            return rotateLeft(); // Perform left rotation on the current node
         }
-        return this; // Node is balanced
+
+        return this; // Return the balanced node
     }
 
-    // Perform a left rotation on the current node
-    BinaryTreeNode<K, V> *leftRotate()
+    // Updates the height of the current node based on its children.
+    void updateHeight()
     {
-        BinaryTreeNode<K, V> *newRoot = right;
-        right = newRoot->left;
-        newRoot->left = this;
-        height = std::max(left ? left->height : 0, right ? right->height : 0) + 1; // Update height
-        return newRoot;
+        height = 1 + std::max(getHeight(left), getHeight(right));
     }
 
-    // Perform a right rotation on the current node
-    BinaryTreeNode<K, V> *rightRotate()
+    // Returns the balance factor of the node (difference between left and right subtree heights).
+    int getBalanceFactor()
     {
-        BinaryTreeNode<K, V> *newRoot = left;
-        left = newRoot->right;
-        newRoot->right = this;
-        height = std::max(left ? left->height : 0, right ? right->height : 0) + 1; // Update height
-        return newRoot;
+        return getHeight(left) - getHeight(right);
     }
 
-    // Calculate the difference in height between the left and right subtrees
-    int getHeightDifference()
+    // Performs a right rotation to balance the tree.
+    BinaryTreeNode<K, V> *rotateRight()
     {
-        int leftHeight = left ? left->height : 0;
-        int rightHeight = right ? right->height : 0;
-        return leftHeight - rightHeight; // Balance factor
+        BinaryTreeNode<K, V> *newRoot = left; // The left child becomes the new root
+        left = newRoot->right; // The left child's right subtree becomes the current node's left subtree
+        newRoot->right = this; // The current node becomes the right child of the new root
+        updateHeight(); // Update heights
+        newRoot->updateHeight();
+        return newRoot; // Return the new root
     }
 
-    // Copy the tree starting from the current node
-    BinaryTreeNode<K, V> *copy_tree()
+    // Performs a left rotation to balance the tree.
+    BinaryTreeNode<K, V> *rotateLeft()
     {
-        BinaryTreeNode<K, V> *node = new BinaryTreeNode<K, V>(key);
-        if (left) 
-        {
-            node->left = left->copy_tree(); // Recursively copy left subtree
-        }
-        if (right) 
-        {
-            node->right = right->copy_tree(); // Recursively copy right subtree
-        }
-        return node;
+        BinaryTreeNode<K, V> *newRoot = right; // The right child becomes the new root
+        right = newRoot->left; // The right child's left subtree becomes the current node's right subtree
+        newRoot->left = this; // The current node becomes the left child of the new root
+        updateHeight(); // Update heights
+        newRoot->updateHeight();
+        return newRoot; // Return the new root
     }
 
-private:
-    K key;        // Key of the node
-    V value;      // Value associated with the key
-    BinaryTreeNode<K, V> *left, *right;  // Left and right children
-    int height;   // Height of the node for AVL balancing
+    K key; // The key stored in the node
+    V value; // The value associated with the key
+    BinaryTreeNode<K, V> *left; // Pointer to the left child
+    BinaryTreeNode<K, V> *right; // Pointer to the right child
+    int height; // Height of the node for AVL balancing
 };
-#endif
+
+// Function to get the height of a node, returning 0 for null nodes.
+template <class K, class V>
+int getHeight(BinaryTreeNode<K, V> *node)
+{
+    return node ? node->height : 0;
+}
+
+std::vector<std::string> sortfile(const std::string &filename)
+{
+    // Open the file in binary mode for reading
+    std::ifstream file(filename, std::ios::binary);
+    if (!file)
+    {
+        // Throw a runtime error if the file cannot be opened
+        throw std::runtime_error("fail");
+    }
+
+    BinaryTree<std::string, int> tree; // Create a BinaryTree to store unique strings
+    std::string line;
+    while (std::getline(file, line)) // Read each line from the file
+    {
+        tree[line] = 0; // Insert the line into the tree with a default value of 0
+    }
+
+    std::vector<std::string> sortedLines; // Vector to store sorted lines
+    for (const auto &[key, value] : tree) // Use the BinaryTree iterator for traversal
+    {
+        sortedLines.push_back(key); // Collect keys (lines) in sorted order
+    }
+
+    return sortedLines; // Return the sorted lines
+}
+
+#endif 
