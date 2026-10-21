@@ -1,5 +1,5 @@
-# C-Template
-Template for C programming for ECS 36C at Davis
+# C++ Binary Search Tree
 
-This consists of a simple Hello World program and a trivial Makefile
-with debugging turned on.
+A templated binary search tree with iterators, insertion, deletion, copy/move operations, and balancing routines.
+
+Course project built from the ECS 36C starter template at UC Davis.
